@@ -53,6 +53,5 @@ public static void main(String[] args) throws NotFoundException, SQLException, I
 
 
 <a name="3528697a"></a>
-# github地址
-[https://github.com/fwq418233640/documentutil](https://github.com/fwq418233640/documentutil)
+
 
