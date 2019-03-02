@@ -14,24 +14,27 @@ import java.util.Map;
 public interface DataBaseHandler {
 
     /**
-     * <p>获取数据源下所有表名称</p>
+     * 获取数据源下所有表名称
      */
     List<String> getTable(ConnectionInstance connectionInstance);
-
+    
+    /**
+     * 获取数据源下所有表名称以及注释信息
+     * */
     Map<String, String> getTableNameAndCommmit(ConnectionInstance connectionInstance);
 
     /**
-     * <p>获取数据源下所有表结构</p>
+     * 获取数据源下所有表结构
      */
     Map<String, List<ColumnStructure>> getTableStructure(ConnectionInstance connectionInstance);
 
     /**
-     * <p>获取表结构</p>
+     * 获取表结构
      */
-    Map<String, List<ColumnStructure>> getTableDesc(List<String> list, Connection connection) throws SQLException;
+    Map<String, List<ColumnStructure>> getTableDesc(List<String> list, ConnectionInstance connectionInstance) throws SQLException;
 
     /**
-     * <p>测试连接</p>
+     * 测试连接
      */
     boolean testConnection(ConnectionInstance connectionInstance);
 }

@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -58,7 +57,7 @@ public class MySqlHandlerImpl implements DataBaseHandler {
 
     /**
      * 获取所有表
-     * */
+     */
     @Override
     public List<String> getTable(ConnectionInstance connectionInstance) {
         Connection connection = getConnection(connectionInstance);
@@ -76,14 +75,14 @@ public class MySqlHandlerImpl implements DataBaseHandler {
 
     /**
      * 获取表信息
-     * */
-    public Msg getTableInfo(ConnectionInstance connectionInstance,String tableName){
+     */
+    public Msg getTableInfo(ConnectionInstance connectionInstance, String tableName) {
         Connection connection = getConnection(connectionInstance);
         String sql = "select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_COMMENT from information_schema.columns where table_schema =?  and table_name =?";
         try {
             ResultSet query = JDBCUtil.query(sql, new Object[]{connectionInstance.getDatabseName(), tableName}, connection);
 
-            while (query.next()){
+            while (query.next()) {
                 String column_name = query.getString("COLUMN_NAME");
                 String column_type = query.getString("COLUMN_TYPE");
                 String column_key = query.getString("COLUMN_KEY");
@@ -134,10 +133,23 @@ public class MySqlHandlerImpl implements DataBaseHandler {
     /**
      * <p>获取表结构信息</p>
      *
-     * @param list       表名集合
-     * @param connection 数据库连接
+     * @param list               表名集合
+     * @param connectionInstance 数据库连接信息
      */
     @Override
+    public Map<String, List<ColumnStructure>> getTableDesc(List<String> list, ConnectionInstance connectionInstance) throws SQLException {
+        Map<String, List<ColumnStructure>> map = new LinkedHashMap<>();
+        getColumns(list, getConnection(connectionInstance), map);
+        return map;
+    }
+
+
+    /**
+     * <p>获取表结构信息</p>
+     *
+     * @param list       表名集合
+     * @param connection 数据库连接信息
+     */
     public Map<String, List<ColumnStructure>> getTableDesc(List<String> list, Connection connection) throws SQLException {
         Map<String, List<ColumnStructure>> map = new LinkedHashMap<>();
         getColumns(list, connection, map);
@@ -159,23 +171,26 @@ public class MySqlHandlerImpl implements DataBaseHandler {
             ResultSet query = JDBCUtil.query(sql, null, connection);
 
             if (!query.next()) {
-                LOG.error(str + " 表不存在！MysqlHandlerImpl.getColumns() 138 line.");
+                LOG.error(str + " 表不存在!");
                 return;
             }
 
-            ResultSet que = JDBCUtil.query("desc " + str, null, connection);
-            ResultSetMetaData metaData = que.getMetaData();
-            int columnCount = metaData.getColumnCount();
+            sql = "select COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_COMMENT from information_schema.columns where TABLE_NAME = ?";
+
+            ResultSet que = JDBCUtil.query(sql, new String[]{str}, connection);
             while (que.next()) {
+
+                String column_name = que.getString("COLUMN_NAME");
+                String column_type = que.getString("COLUMN_TYPE");
+                String is_nullable = que.getString("IS_NULLABLE");
+                String column_comment = que.getString("COLUMN_COMMENT");
+
                 ColumnStructure columnStructure = new ColumnStructure();
-                for (int i = 1; i < columnCount; i++) {
-                    String key = metaData.getColumnName(i);
-                    Object val = que.getObject(i);
-                    selectColumnType(columnStructure, key, val);
-                    columnStructure.setTableName(str);
-                }
-                columnStructure.setUserColumnName(columnStructure.getColumnName());
-                columnStructure.setColumnName(columnStructure.getColumnName());
+                columnStructure.setColumnName(column_name);
+                columnStructure.setColumnType(column_type);
+                columnStructure.setIsNullable(is_nullable);
+                columnStructure.setColumnComment(column_comment);
+                columnStructure.setTableName(str);
                 lis.add(columnStructure);
             }
             map.put(str, lis);
