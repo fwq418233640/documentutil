@@ -1,13 +1,10 @@
 package com.ch.document.plugins;
 
 
-import com.ch.base.Msg;
 import com.ch.base.domains.ColumnStructure;
 import com.ch.base.domains.ConnectionInstance;
-import com.ch.base.enums.ColumnType;
 import com.ch.base.interfaces.DataBaseHandler;
 import com.ch.utils.JDBCUtil;
-import com.ch.utils.MessyUtil;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +43,7 @@ public class MySqlHandlerImpl implements DataBaseHandler {
 
         List<String> source = JDBCUtil.getList(sql, new Object[]{connectionInstance.getDatabseName()}, connection);
         try {
-            return getTableDesc(source, connection);
+            return getTableDesc(source, connection, connectionInstance.getDatabseName());
         } catch (SQLException e1) {
             e1.printStackTrace();
         } finally {
@@ -72,31 +69,6 @@ public class MySqlHandlerImpl implements DataBaseHandler {
         return null;
     }
 
-
-    /**
-     * 获取表信息
-     */
-    public Msg getTableInfo(ConnectionInstance connectionInstance, String tableName) {
-        Connection connection = getConnection(connectionInstance);
-        String sql = "select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_COMMENT from information_schema.columns where table_schema =?  and table_name =?";
-        try {
-            ResultSet query = JDBCUtil.query(sql, new Object[]{connectionInstance.getDatabseName(), tableName}, connection);
-
-            while (query.next()) {
-                String column_name = query.getString("COLUMN_NAME");
-                String column_type = query.getString("COLUMN_TYPE");
-                String column_key = query.getString("COLUMN_KEY");
-                String column_comment = query.getString("COLUMN_COMMENT");
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            JDBCUtil.close(connection);
-        }
-
-        return null;
-    }
 
     /**
      * 获取表名称和注释
@@ -139,7 +111,7 @@ public class MySqlHandlerImpl implements DataBaseHandler {
     @Override
     public Map<String, List<ColumnStructure>> getTableDesc(List<String> list, ConnectionInstance connectionInstance) throws SQLException {
         Map<String, List<ColumnStructure>> map = new LinkedHashMap<>();
-        getColumns(list, getConnection(connectionInstance), map);
+        getColumns(list, getConnection(connectionInstance), map, connectionInstance.getDatabseName());
         return map;
     }
 
@@ -150,9 +122,9 @@ public class MySqlHandlerImpl implements DataBaseHandler {
      * @param list       表名集合
      * @param connection 数据库连接信息
      */
-    public Map<String, List<ColumnStructure>> getTableDesc(List<String> list, Connection connection) throws SQLException {
+    private Map<String, List<ColumnStructure>> getTableDesc(List<String> list, Connection connection, String databaseName) throws SQLException {
         Map<String, List<ColumnStructure>> map = new LinkedHashMap<>();
-        getColumns(list, connection, map);
+        getColumns(list, connection, map, databaseName);
         return map;
     }
 
@@ -163,33 +135,33 @@ public class MySqlHandlerImpl implements DataBaseHandler {
      * @param connection 链接
      * @param map        返回值
      */
-    private static void getColumns(List<String> list, Connection connection, Map<String, List<ColumnStructure>> map) throws SQLException {
+    private static void getColumns(List<String> list, Connection connection, Map<String, List<ColumnStructure>> map, String databaseName) throws SQLException {
         for (String str : list) {
             List<ColumnStructure> lis = new ArrayList<>();
 
-            String sql = "SELECT table_name FROM information_schema.TABLES WHERE table_name ='" + str + "'";
+            String sql = "SELECT table_name FROM information_schema.TABLES WHERE table_name ='" + str + "'" + " and TABLE_SCHEMA = '" + databaseName + "'";
             ResultSet query = JDBCUtil.query(sql, null, connection);
 
             if (!query.next()) {
-                LOG.error(str + " 表不存在!");
+                LOG.error(str, " 表不存在!");
                 return;
             }
 
-            sql = "select COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_COMMENT from information_schema.columns where TABLE_NAME = ?";
+            sql = "select COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_COMMENT from information_schema.columns where TABLE_NAME = ?" + " and TABLE_SCHEMA = ?";
 
-            ResultSet que = JDBCUtil.query(sql, new String[]{str}, connection);
+            ResultSet que = JDBCUtil.query(sql, new String[]{str,databaseName}, connection);
             while (que.next()) {
 
-                String column_name = que.getString("COLUMN_NAME");
-                String column_type = que.getString("COLUMN_TYPE");
-                String is_nullable = que.getString("IS_NULLABLE");
-                String column_comment = que.getString("COLUMN_COMMENT");
+                String columnName = que.getString("COLUMN_NAME");
+                String columnType = que.getString("COLUMN_TYPE");
+                String nullable = que.getString("IS_NULLABLE");
+                String columnComment = que.getString("COLUMN_COMMENT");
 
                 ColumnStructure columnStructure = new ColumnStructure();
-                columnStructure.setColumnName(column_name);
-                columnStructure.setColumnType(column_type);
-                columnStructure.setIsNullable(is_nullable);
-                columnStructure.setColumnComment(column_comment);
+                columnStructure.setColumnName(columnName);
+                columnStructure.setColumnType(columnType);
+                columnStructure.setIsNullable(nullable);
+                columnStructure.setColumnComment(columnComment);
                 columnStructure.setTableName(str);
                 lis.add(columnStructure);
             }
@@ -197,31 +169,6 @@ public class MySqlHandlerImpl implements DataBaseHandler {
         }
     }
 
-    private static void selectColumnType(ColumnStructure columnStructure, String key, Object val) {
-        switchColumnType(columnStructure, key, val);
-    }
-
-    /**
-     * <p>设置列属性</p>
-     */
-    private static void switchColumnType(ColumnStructure columnStructure, String key, Object val) {
-        switch (key) {
-            case ColumnType.COLUMN_NAME:
-                columnStructure.setColumnName(MessyUtil.getStringVal(val));
-                break;
-            case ColumnType.COLUMN_TYPE:
-                columnStructure.setColumnType(MessyUtil.getStringVal(val));
-                break;
-            case ColumnType.COLUMN_KEY:
-                columnStructure.setColumnKey(MessyUtil.getStringVal(val));
-                break;
-            case ColumnType.IS_NULLABLE:
-                columnStructure.setIsNullable(MessyUtil.getStringVal(val));
-                break;
-            default:
-                break;
-        }
-    }
 
     /**
      * <p>测试链接</p>

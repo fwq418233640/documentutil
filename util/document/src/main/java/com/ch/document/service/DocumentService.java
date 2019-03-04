@@ -76,22 +76,23 @@ public class DocumentService {
 
         if (tables == null) {
             Msg<List<String>> data = this.getTables(connectionInstance, true);
-            tables = data.getData();
+             tables = data.getData();
         }
 
         String tempdir = System.getProperty("java.io.tmpdir");
         File file = new File(tempdir + File.separator + connectionInstance.getDatabseName() + "数据库设计文档.html");
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+
 
         Msg<Map<String, String>> msg = getTableNameAndCommmit(connectionInstance, false);
         Map<String, List<ColumnStructure>> tableDesc = getTableDesc(tables, connectionInstance, false);
-
+        BufferedWriter writer = null;
         try {
+            writer = new BufferedWriter(new FileWriter(file));
             generator(msg.getData(), tableDesc, connectionInstance.getDatabseName(), writer);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            writer.close();
+            if (writer != null) writer.close();
         }
 
 
@@ -109,7 +110,7 @@ public class DocumentService {
     private void generator(Map<String, String> tableNameAndCommmit, Map<String, List<ColumnStructure>> desc,
                            String databaseName, BufferedWriter stream) throws IOException {
 
-        StringBuffer body = new StringBuffer();
+        StringBuilder body = new StringBuilder();
 
         //  生成固定数据
         body.append("<!DOCTYPE html>\n"
