@@ -1,0 +1,81 @@
+body {
+    text-align: center;
+}
+
+.main {
+    margin: 0 auto;
+    width: 60%;
+}
+
+/* 使表格宽度为100%并去掉默认边框 */
+table {
+    width: 100%;
+    max-width: 80%; /* 限制表格最大宽度 */
+    margin: auto; /* 将表格居中 */
+    border-collapse: collapse;
+}
+
+/* 表头和单元格样式 */
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+/* 表头背景色 */
+th {
+    background-color: #f2f2f2;
+}
+
+/* 设置列宽度比例 */
+th.serial, td.serial {
+    width: 5%; /* 序号列宽度 */
+}
+
+th.name, td.name {
+    width: 30%; /* 表名列宽度 */
+}
+
+th.comment, td.comment {
+    width: 30%; /* 注释列宽度 */
+}
+
+/* 使表格父容器居中 */
+.table {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form {
+    width: 100%;
+    max-width: 40%; /* 限制表格最大宽度 */
+    margin: auto; /* 将表格居中 */
+    border-collapse: collapse;
+    padding-top: 20px;
+}
+
+.click {
+    text-align: center;
+}
+
+.message {
+    width: 100%;
+    max-width: 25%; /* 限制表格最大宽度 */
+    margin: auto; /* 将表格居中 */
+    border-collapse: collapse;
+    padding-top: 20px;
+}
+
+#success {
+    position: fixed;
+    top: 20px; /* 距离顶部20px */
+    left: 50%;
+    text-align: center;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    display: none; /* 初始隐藏 */
+    z-index: 1000; /* 确保在最上层 */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
